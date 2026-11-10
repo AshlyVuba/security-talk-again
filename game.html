@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Real or lookalike?</title>
+<style>
+:root{--bg:#F7F6F4;--fg:#231F20;--card:#fff;--line:#e3e0dc;--muted:#6B6A6C;--red:#B02030;--green:#0A7A45;--coral:#EE4B3B;--purple:#5B4FA0;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#231F20;--fg:#F7F6F4;--card:#2f2a2c;--line:#443e41;--muted:#b9b5c9;--red:#d63a4c;--green:#128a52}}
+:root[data-theme="dark"]{--bg:#231F20;--fg:#F7F6F4;--card:#2f2a2c;--line:#443e41;--muted:#b9b5c9;--red:#d63a4c;--green:#128a52}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:18px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:640px;margin:0 auto;padding:22px 18px 40px}
+.tag{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);font-weight:700}
+h1{font-size:30px;line-height:1.15;margin:6px 0 10px}
+p.q{font-size:20px;margin:6px 0 18px}
+.bar{height:6px;background:var(--line);border-radius:3px;margin:10px 0 18px;overflow:hidden}.bar i{display:block;height:100%;background:var(--coral)}
+button{font:inherit;cursor:pointer}
+.opt{display:block;width:100%;text-align:left;background:var(--card);color:var(--fg);border:2px solid var(--line);border-radius:14px;padding:18px;margin:0 0 12px;font-size:26px;transition:background .15s,border-color .15s}
+.opt.ok{background:var(--green);border-color:var(--green);color:#fff}
+.opt.bad{background:var(--red);border-color:var(--red);color:#fff;animation:sh .3s}
+.opt.rev{border-color:var(--green);box-shadow:0 0 0 3px var(--green) inset}
+.opt:disabled{cursor:default}
+@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.btn{background:var(--coral);color:#fff;border:0;border-radius:12px;padding:14px 26px;font-weight:700;font-size:18px;margin-top:8px}
+.why{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:6px}
+.why code{display:block;font:16px/1.7 Consolas,"Courier New",monospace}
+.why mark{background:none;color:var(--red);font-weight:700;text-decoration:underline}
+.why .r{color:var(--green);font-weight:700}
+.big{font-size:64px;font-weight:800;margin:6px 0}
+.muted{color:var(--muted)}
+</style></head><body><main id="app"></main>
+<script>
+var R=[
+{p:"You need to read from Azure Blob Storage. Which one is the real package?",
+ o:["azure-storage-blob","azure-storage-b<mark>1</mark>ob","azure-storage-blob<mark>s</mark>","azure-stor<mark>r</mark>age-blob"],
+ w:"The digit 1 and a lowercase l look alike in most fonts. Extra letters and doubled letters are the other classics. Squatters register names like these and wait for a typo."},
+{p:"Which one is the real package?",
+ o:["numpy","nu<mark>rn</mark>py","nu<mark>n</mark>py","nump<mark>v</mark>"],
+ w:"‘rn’ looks like ‘m’ at a glance, especially on a phone screen at 11pm."},
+{p:"Which one is the real package?",
+ o:["python-dateutil","python<mark>3</mark>-dateutil","python-dateutil<mark>s</mark>","python-dat<mark>au</mark>til"],
+ w:"A lookalike with the ‘3’ was reported as malicious back in 2019. The ‘3’ makes it look more official, not less."},
+{p:"You have import sklearn in your code. What do you pip install?",
+ o:["scikit-learn","sklearn","scikitlearn","scikit-learn<mark>s</mark>"],
+ w:"The import name isn’t always the install name. That gap is exactly where AI assistants and squatters play."}
+];
+var i=-1,score=0,done=false,app=document.getElementById("app");
+function sh(a){a=a.slice();for(var k=a.length-1;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t}return a}
+function strip(h){return h.replace(/<[^>]+>/g,"")}
+function intro(){app.innerHTML='<div class="tag">Supply chain game</div><h1>Real or lookalike?</h1><p class="q">Four rounds. Tap the real package. The fakes are built to be missed, so look closely.</p><button class="btn" onclick="next()">Start</button>'}
+function next(){i++;done=false;if(i>=R.length)return end();var r=R[i],o=sh(r.o.map(function(h,n){return{h:h,real:n===0}}));
+ var h='<div class="tag">Round '+(i+1)+' of '+R.length+'</div><div class="bar"><i style="width:'+(i/R.length*100)+'%"></i></div><p class="q">'+r.p+'</p>';
+ o.forEach(function(x,n){h+='<button class="opt" data-n="'+n+'">'+strip(x.h)+'</button>'});
+ h+='<div id="out"></div>';app.innerHTML=h;
+ var bs=app.querySelectorAll(".opt");
+ bs.forEach(function(b){b.onclick=function(){if(done)return;done=true;var x=o[+b.dataset.n];
+  bs.forEach(function(c){c.disabled=true});
+  if(x.real){score++;b.classList.add("ok")}else{b.classList.add("bad");bs.forEach(function(c,n){if(o[n].real)setTimeout(function(){c.classList.add("rev")},450)})}
+  var w='<div class="why"><b>'+(x.real?"Correct.":"Not quite.")+'</b> '+r.w;
+  o.slice().sort(function(a,b){return b.real-a.real}).forEach(function(y){w+='<code'+(y.real?' class="r"':'')+'>'+(y.real?"✓ ":"✗ ")+y.h+'</code>'});
+  w+='</div><button class="btn" onclick="next()">'+(i===R.length-1?"See my score":"Next round")+'</button>';
+  setTimeout(function(){document.getElementById("out").innerHTML=w},x.real?100:600)}})}
+function end(){var m=score===4?"Eagle eyes. Now imagine doing that for 40 dependencies.":score>=2?"Not bad, and that was with the answer being one of four, in daylight.":"Don’t worry. That’s the point: nobody can eyeball this.";
+ app.innerHTML='<div class="tag">Done</div><div class="big">'+score+' / '+R.length+'</div><p class="q">'+m+'</p><div class="why">You can’t spot these by eye, so don’t rely on it. Install from a private feed, pin hashes, and check a new name before it runs.</div><button class="btn" onclick="i=-1;score=0;intro()">Play again</button>'}
+intro();
+</script>
+
+<!-- Presenter QR Mode -->
+<button id="qr-btn" style="position:fixed;top:12px;right:12px;background:#231F20;color:#fff;border:1px solid #443e41;border-radius:20px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;z-index:99">QR Mode</button>
+<div id="qr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;color:#231F20;padding:24px;border-radius:16px;max-width:360px;width:100%;text-align:center">
+    <h3 style="margin:0 0 10px">Scan to Play</h3>
+    <input id="qr-url" type="url" placeholder="Paste https://... URL here" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;margin-bottom:14px;font-size:14px">
+    <div id="qr-box" style="margin:10px auto;display:flex;justify-content:center"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:14px">
+      <button id="qr-dl" style="display:none;padding:8px 16px;border:0;border-radius:8px;background:#0A7A45;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Download PNG</button>
+      <button onclick="document.getElementById('qr-modal').style.display='none'" style="padding:8px 16px;border:0;border-radius:8px;background:#EE4B3B;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var qrBox=document.getElementById('qr-box'),qrInput=document.getElementById('qr-url'),qrDl=document.getElementById('qr-dl');
+function renderQR(url){
+  qrBox.innerHTML=''; qrDl.style.display='none';
+  if(url && url.startsWith('http')){
+    new QRCode(qrBox,{text:url,width:220,height:220});
+    qrDl.style.display='inline-block';
+  }
+}
+document.getElementById('qr-btn').onclick=function(){
+  document.getElementById('qr-modal').style.display='flex';
+  if(!qrInput.value && window.location.protocol.startsWith('http')){
+    qrInput.value=window.location.href;
+    renderQR(qrInput.value);
+  }
+};
+qrInput.oninput=function(e){renderQR(e.target.value.trim());};
+qrDl.onclick=function(){
+  var canvas=qrBox.querySelector('canvas');
+  if(!canvas)return;
+  var a=document.createElement('a');
+  a.download='real-or-lookalike-qr.png';
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+};
+</script>
+</body></html>
